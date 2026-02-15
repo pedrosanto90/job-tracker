@@ -1,0 +1,35 @@
+.header {
+  background: #004777;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 10px;
+  position: sticky;
+  top: 0;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-title {
+  color: #fff;
+  font-size: 24px;
+  margin: 0;
+}
+
+.header-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
