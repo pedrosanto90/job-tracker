@@ -57,3 +57,8 @@ drop policy if exists "history_insert_own" on public.status_history;
 create policy "history_insert_own"
 on public.status_history for insert
 with check (user_id = auth.uid());
+
+drop policy if exists "user_profiles_select_own" on public.user_profiles;
+create policy "user_profiles_select_own"
+on public.user_profiles for select
+using (user_id = auth.uid());

@@ -29,6 +29,13 @@ create table if not exists public.status_history (
   changed_at timestamptz not null default now()
 );
 
+create table if not exists public.user_profiles (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  username text,
+  created_at timestamptz not null default now()
+)
+
 -- 2) Constraints (status)
 alter table public.job_applications
   drop constraint if exists job_applications_status_check;
