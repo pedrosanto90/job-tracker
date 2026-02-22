@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -21,6 +22,7 @@ import { NewUser } from '../../interfaces/user/new-user';
 export class CreateAccount {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(Auth);
+  private router = inject(Router);
 
   protected readonly form = this.fb.group(
     {
@@ -57,18 +59,17 @@ export class CreateAccount {
     };
 
     const { data, error }: AuthResponse = await this.authService.signUp(user);
-
     if (error) {
       console.error(`Auth signUp error: ${error}`);
       return;
     }
 
     const userId = data?.user?.id;
-
     if (!userId) {
       console.error('Auth signUp returned without user id');
       return;
     }
+    this.router.navigate(['/login']);
   }
 }
 
