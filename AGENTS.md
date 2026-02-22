@@ -1,145 +1,152 @@
-# AGENTS PLAYBOOK
-Project-specific reference for agentic contributors working in this repo.
+# AGENTS PLAYBOOK (job-tracker)
+Project-specific guidance for agentic contributors. Keep it terse, actionable, and aligned with existing patterns.
 
 ## Quick Facts
-- Stack: Angular 21 standalone components, TypeScript strict mode, SCSS styling.
-- Testing: Vitest via `@angular/build:unit-test` (Angular CLI `ng test`).
-- UI libs: Angular Material (toolbar, button, icon). Forms are Reactive Forms.
-- State: Signals are available (see `src/app/app.ts`), otherwise DI-driven services.
-- Data: Supabase client wrapper in `src/app/services/supabase/supabase.ts` and `src/app/core/supabase/*`.
-- Routing: Standalone route definitions in `src/app/app.routes.ts`.
-- No Cursor/Copilot repo rules present.
-- Prettier config lives in `package.json` (printWidth 100, singleQuote true, Angular parser for HTML).
-- Default style language: SCSS (set in `angular.json`).
-- Package manager: npm (packageManager npm@10.9.4).
+- Stack: Angular 21 (standalone components), TypeScript strict, SCSS.
+- UI: Angular Material (toolbar, button, icon). Shared button component at `src/app/components/button`.
+- State: Signals allowed (see `App`), services via Angular DI.
+- Data: Supabase JS client via `Supabase` service (`src/app/services/supabase/supabase.ts`); another thin client lives in `src/app/core/supabase/supabase.client.ts` (avoid duplicating clients per feature).
+- Routing: Standalone routes in `src/app/app.routes.ts`.
+- Environments: `src/environments/environment.ts` (committed; contains anon key—do NOT add new secrets elsewhere).
+- No Cursor rules (`.cursor/`, `.cursorrules`) or Copilot rules found.
+- Formatter: Prettier config in `package.json` (printWidth 100, singleQuote true, Angular parser for HTML). No ESLint config; rely on TS strict + Prettier.
 
 ## Setup
-- Use Node compatible with npm 10.x (Node 20+ is safe for Angular 21 CLI).
-- Install dependencies: `npm install`.
-- Environment file is committed at `src/environments/environment.ts`; treat secrets with care.
-- Angular CLI commands are available via `npx ng <command>` or package scripts.
-- Generated artifacts go to `dist/` (build) and `out-tsc/` (TS emit for tests/app).
+- Node 20+ recommended (npm 10.x). Install: `npm install`.
+- Angular CLI via `npx ng ...` (scripts wrap it).
+- Build outputs: `dist/`; TS emit for tests/app: `out-tsc/`.
 
 ## Core Commands
-- Dev server: `npm start` (alias `ng serve`) → http://localhost:4200/.
-- Production build: `npm run build` (defaults to production config with output hashing and budgets).
-- Dev build/watch: `npm run watch` (builds in watch mode with dev config).
-- Unit tests (watch mode): `npm test` or `ng test` (Vitest + jsdom).
-- Single test by file: `npx vitest run src/app/components/home/home.spec.ts` (fast path without CLI wrapper).
-- Single test by name: `ng test -- --testNamePattern="should create the app"` (for Vitest name filtering).
-- Collect coverage (Vitest): `npx vitest run --coverage` (works against the same Vitest setup).
-- Lint: no ESLint setup; rely on Prettier + TypeScript strictness. Run `npx prettier --check "src/**/*.{ts,html,scss}"`.
+- Dev server: `npm start` (alias `ng serve`) → http://localhost:4200/
+- Prod build: `npm run build` (uses production config/budgets).
+- Dev build watch: `npm run watch`.
+- Tests (watch): `npm test` or `ng test` (Vitest + jsdom via Angular CLI builder).
+- Single test by file (fast path): `npx vitest run src/app/components/home/home.spec.ts`
+- Single test by name: `ng test -- --testNamePattern="should create the app"` or `npx vitest run src/app/components/home/home.spec.ts -t "should create the app"`
+- Coverage: `npx vitest run --coverage`
+- Format check: `npx prettier --check "src/**/*.{ts,html,scss}"`
+- Format write: `npx prettier --write "src/**/*.{ts,html,scss}"`
 
-## Formatting & Style
-- Prettier rules: width 100, single quotes for TS/SCSS, Angular parser for HTML templates.
-- Prefer multi-line objects/arrays when readability improves within 100 columns.
-- Keep SCSS consistent with existing nesting and variables; avoid inline styles in templates.
-- Do not reflow strings solely for width if they are URLs or error messages.
-
-## TypeScript/Angular Conventions
-- Strict TS is enabled (`strict`, `noImplicitOverride`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, etc.). Add explicit types for public API surfaces and injected deps.
-- Use `readonly` where possible; prefer `private readonly` for injected services and constants.
-- Standalone components: declare `imports` array in `@Component` metadata instead of NgModules.
-- Selector prefix is `app-`; keep filenames kebab-cased matching selector (e.g., `create-account`).
-- Prefer `signal` for simple local state (see `App` title) and DI services for shared state.
-- Use Angular DI helpers: `inject(...)` for functional style or constructor injection; keep DI side-effect free.
-
-## Imports
-- Ordering convention (follow existing files): Angular/Angular Material first, third-party libs next, project-relative modules last.
-- Use relative paths within `src/app` rather than deep aliasing; keep path depth shallow and consistent.
-- Avoid unused imports; prune when touching files.
+## App Shell & Layout
+- App shell files: `src/app/app.ts`, `app.html`, `app.scss`.
+- Layout uses flex column: `:host { min-height: 100vh; display: flex; flex-direction: column; }` with `<main class="app-main">` flex: `1 0 auto`.
+- Footer appears only on routes `'' | '/' | '/login' | '/create-account'` via `showFooter` signal hooked to Router NavigationEnd (see `app.ts`). Keep this contract when adding routes: default is hidden unless whitelisted.
+- Sticky footer behavior: footer sits at bottom on short pages, flows after content on long pages. Do not reintroduce `height: 100vh` on pages; prefer `min-height: 100%` or padding.
 
 ## Routing
-- Routes live in `src/app/app.routes.ts`; components are referenced directly via `component` (standalone).
-- Default route is home (`'' → Home`); auth flows at `create-account` and `login` paths.
-- Add guards/resolvers alongside route definitions if needed; keep route objects terse.
-
-## Components & Templates
-- Keep `@Component` metadata minimal: `selector`, `imports`, `templateUrl`, `styleUrl`.
-- Expose template-facing properties/methods as `protected` to limit surface area.
-- Avoid logic in templates; prefer small helper methods in the component class.
-- Structure templates with semantic elements; Angular Material components already imported where used.
+- Routes: `src/app/app.routes.ts`. Default: `'' -> Home`; auth: `/login`, `/create-account`.
+- When adding routes, remember footer visibility rule. If a new route must show footer, add it to `shouldShowFooter` in `app.ts`.
 
 ## Styling (SCSS)
-- Global styles: `src/styles.scss`; component styles co-located (`styleUrl`).
-- Maintain BEM-like class naming already present; avoid deep selectors when possible.
-- Color palette reference in README (`coolors.co` link); reuse existing variables/mixins when added.
+- Global theme in `src/styles.scss` (Angular Material theming, Roboto). Body/html set to height 100%, background from Material system vars.
+- Header styles: `src/app/components/header/header.scss` (blue `#004777`, sticky top, max-width 1200px).
+- Footer styles: `src/app/components/footer/footer.scss` mirrors header colors; responsive stack at <=640px.
+- Component styles co-located via `styleUrl`. Maintain nesting; avoid deep selectors. Keep within 100 cols when possible.
+- `create-account.scss`: uses centered card, `min-height: 100%` (not 100vh). Preserve this to avoid fighting the sticky footer.
+
+## TypeScript/Angular Conventions
+- Strict TS enforced. Provide explicit return types for public methods/services. Use `readonly` for injected deps/consts.
+- Standalone components: declare `imports` in `@Component` metadata (no NgModules). Selector prefix `app-`; filenames kebab-case.
+- Prefer `inject()` for DI where idiomatic; keep DI side-effect free.
+- Template-facing members should be `protected` (current pattern) to limit API.
+- Use signals for simple local state; keep shared state in services.
+
+## Imports Ordering
+1) Angular/Angular Material
+2) Third-party libs
+3) Project-relative modules (short relative paths). Remove unused imports when touching a file.
 
 ## Forms & Validation
-- Reactive Forms are standard (`NonNullableFormBuilder` in `CreateAccount`).
-- Use `updateOn: 'blur'` when deferring validation (as done in create-account form).
-- Keep validators declarative and extracted when reused (e.g., move password matcher into helpers when shared).
-- Prefer `form.getRawValue()` for full value extraction; guard with `form.invalid` early return.
-- Surface validation errors in UI instead of console-only handling when expanding features.
+- Reactive Forms default. Use `NonNullableFormBuilder`. Validators declared inline; cross-field validators extracted when reused (see `passwordsMatch`).
+- Use `updateOn: 'blur'` when deferring validation (done in Create Account).
+- Guard on `form.invalid` early; use `form.getRawValue()` to read values.
+- Surface errors in UI; console logs are acceptable only as stopgaps.
 
-## Data & Supabase
-- Supabase client wrapper: `Supabase` service (`src/app/services/supabase/supabase.ts`) exposes `client` getter.
-- Another lightweight client is in `src/app/core/supabase/supabase.client.ts`; pick one and avoid duplicate clients per feature.
-- Auth: `Auth` service proxies `supabase.auth.signUp`; returns Supabase response; expand with sign-in/reset as needed.
-- User profile creation: `User.addUser` inserts into `public.user_profiles` via Supabase RPC.
-- Always handle `{ data, error }` from Supabase; log with context and return typed results.
-- Keep Supabase keys in environment; do not hardcode outside `environment.ts`.
+## Supabase & Data
+- Client wrapper: `src/app/services/supabase/supabase.ts` exposes `.client` (Supabase JS v2). Avoid multiple client instances per feature.
+- Auth service: `src/app/services/auth/auth.ts` `signUp` sends `options.data.username` to Supabase; returns `AuthResponse`. Handle `{ data, error }` in callers.
+- Profile creation is now DB-driven: trigger `handle_new_user` (see `src/db/user_profiles_trigger.sql`) creates `public.user_profiles` row after Auth signup, requires non-empty `username`, and enforces `unique(user_id)`. Signup fails if username missing/blank.
+- Old `User.addUser` service exists but is not used in signup; if reusing, always check `{ data, error }` and align with RLS.
+- RLS policies in `src/db/rls_policies.sql`; general schema in `src/db/query.sql`.
+- Never add Supabase secrets beyond `environment.ts` (anon key only). No service-role key in frontend.
 
-## Error Handling & Logging
-- Current pattern is console logging (`console.log`/`console.error`). Prefer typed error objects and user-facing messaging.
-- Early-return on invalid form state and nullish IDs (see `CreateAccount.onSubmitCreateAccount`).
-- Wrap async calls with try/catch when adding side effects (navigation, storage) and provide fallbacks.
-- Avoid swallowing errors; return structured results (e.g., `{ ok: boolean; error?: string }`).
+## Error Handling
+- Pattern: early returns on invalid form or missing IDs. Log with context: `console.error('Auth signUp error', error)`.
+- When adding flows, prefer typed results: `{ ok: boolean; error?: string; data?: T }`.
+- Wrap side-effectful async ops in try/catch (navigation, storage). Do not swallow errors; propagate or show UI message.
 
 ## Naming
-- Classes and components: PascalCase (`Home`, `CreateAccount`, `Supabase`).
-- Files: kebab-case matching component/service purpose (`header.ts`, `auth.service.ts`).
-- Inputs/outputs: explicit types; narrow union types for options (e.g., button `type: 'button' | 'submit' | 'reset'`).
-- Functions are verb-led (`addUser`, `onSubmitCreateAccount`); validators named descriptively.
+- PascalCase for components/services (`CreateAccount`, `Supabase`).
+- Kebab-case filenames and selectors (`create-account`).
+- Functions verb-first (`onSubmitCreateAccount`, `addUser`).
+- Types/interfaces: nouns, PascalCase (`NewUser`, `User`). Narrow unions where relevant (e.g., button types).
 
-## Testing Guidance
-- Specs live next to source with `.spec.ts` suffix; Vitest globals are typed via `tsconfig.spec.json` (`vitest/globals`).
-- Use Angular TestBed for standalone components: `TestBed.configureTestingModule({ imports: [Component] }).compileComponents()`.
-- When using fixtures, await `fixture.whenStable()` before DOM assertions (see `app.spec.ts`, `home.spec.ts`).
-- Prefer focused tests per component/service; mock Supabase responses rather than hitting network.
-- Use `ng test -- --testNamePattern="..."` for name filtering; `npx vitest run path/to/spec.ts -t "name"` for direct Vitest usage.
-- Keep specs small and deterministic; avoid relying on console logs for assertions.
+## Formatting
+- Prettier: printWidth 100, singleQuote true. Run formatter before commit suggestions.
+- Keep object/array literals multi-line if it aids readability; avoid gratuitous reflow of long strings/URLs.
+- Prefer `private readonly` for injected services/consts; keep member order: injected deps, signals/state, form/group definitions, lifecycle, methods.
 
-## Performance & Change Detection
-- Standalone components default to `ChangeDetectionStrategy.Default`; consider `OnPush` if adding data-heavy views.
-- Memoize derived values with signals/computed properties instead of recomputing in template.
-- Avoid unnecessary async pipes when values are already available via signals or DI services.
+## Testing
+- Framework: Vitest (via Angular CLI builder). Specs live adjacent with `.spec.ts`.
+- TestBed setup for standalone components: `TestBed.configureTestingModule({ imports: [Component] }).compileComponents();` then `fixture.whenStable()` before DOM asserts.
+- Focused test commands:
+  - By file: `npx vitest run path/to/spec.ts`
+  - By name: `npx vitest run path/to/spec.ts -t "name"` or `ng test -- --testNamePattern="name"`
+- Avoid networked Supabase calls in tests; mock client responses.
 
 ## Accessibility
-- Use semantic headings and labels; buttons already wrapped in a shared `Button` component—ensure `type` is set correctly.
-- Provide aria-labels for icon-only buttons (Angular Material icons in header).
-- Keep form inputs labeled and error messages screen-reader friendly.
+- Use semantic labels/headings. Buttons must have `type` set. Add `aria-label` to icon-only buttons.
+- Form errors should be descriptive; keep label+input associations intact.
+
+## Performance
+- Default CD is `Default`; switch to `OnPush` only if you manage immutable inputs/observables/signals.
+- Use signals/computed for derived values instead of recomputing in templates. Avoid unnecessary async pipes when data already available.
 
 ## Repo Hygiene
-- No lint config—run Prettier manually and keep TS strict errors at zero.
-- Respect existing user changes; avoid reverting committed environment keys unless instructed.
-- Do not introduce new secrets; prefer `.env` style if future secrets are needed (none present now).
-- Keep new files ASCII unless a dependency demands otherwise.
+- Respect existing user changes; do not revert environment keys. No destructive git commands.
+- Keep new files ASCII unless required. Match existing SCSS/TS/HTML style.
+- No lint config—use Prettier and TS errors as your guardrails.
 
-## How to Extend
-- Add new routes by updating `app.routes.ts` and importing standalone components.
-- For new services, decorate with `@Injectable({ providedIn: 'root' })` and inject via constructor or `inject()`.
-- For shared UI, add standalone components under `src/app/components/<feature>/` with matching HTML/SCSS/TS.
-- When adding database features, centralize Supabase access in a single service to avoid duplicate clients.
+## File Map (common targets)
+- App shell: `src/app/app.ts`, `app.html`, `app.scss`.
+- Routing: `src/app/app.routes.ts`; config: `src/app/app.config.ts`.
+- Components: `src/app/components/*` (header, footer, home, login, create-account, button).
+- Services: `src/app/services/*` (auth, users, supabase). Core supabase client: `src/app/core/supabase/*`.
+- Interfaces: `src/app/interfaces/user/*`.
+- Styles: `src/styles.scss` (global), component SCSS co-located.
+- DB SQL: `src/db/query.sql`, `src/db/rls_policies.sql`, `src/db/user_profiles_trigger.sql` (trigger ensures profile on signup).
+- Environments: `src/environments/environment.ts` (anon key). Do not add service-role keys.
 
 ## Build/Test Debugging Tips
-- If `ng test` fails silently, run `npx vitest --runInBand` to surface errors without watch mode.
-- Use `ng test -- --ui` for Vitest UI (if desired) to rerun specific specs interactively.
-- For build size issues, review budgets in `angular.json` (initial 500kB warn/1MB error; component style 4kB/8kB).
-- Enable dev build with source maps via `ng build --configuration development` for easier debugging.
+- If `ng test` hangs, run `npx vitest --runInBand` to surface errors.
+- For coverage in CI-like runs, prefer `npx vitest run --coverage`.
+- For build size/budgets, check `angular.json` (initial bundle warn 500kB / error 1MB; component style 4kB/8kB).
+- Dev build with source maps: `ng build --configuration development`.
 
-## File Reference Map
-- App shell: `src/app/app.ts`, template `src/app/app.html`, styles `src/app/app.scss`.
-- Routing: `src/app/app.routes.ts`; config `src/app/app.config.ts`.
-- Components: header/home/login/create-account/button under `src/app/components/`.
-- Services: `src/app/services/*`; Supabase core in `src/app/core/supabase/*`.
-- Interfaces: `src/app/interfaces/user/*` (user DTOs).
-- Environments: `src/environments/environment.ts`.
-- Database SQL snippets: `src/db/query.sql`, `src/db/rls_policies.sql` (reference only).
+## When Extending
+- Add new routes carefully: update `shouldShowFooter` if footer should appear there.
+- Keep Supabase interactions centralized; reuse the existing client and handle `{ data, error }` explicitly.
+- For new forms, follow create-account patterns: `NonNullableFormBuilder`, validators, `updateOn: 'blur'`, early invalid return.
+- For new shared UI, make standalone components under `src/app/components/<name>/` with matching HTML/SCSS/TS.
 
-## Pulling It Together
-- Follow the command set above for builds/tests; prefer Vitest direct CLI for focused runs.
-- Keep code small, typed, and signal/DI friendly; align with existing file layout and naming.
-- Format with Prettier rules before proposing changes; keep SCSS and HTML tidy.
-- Handle Supabase responses explicitly and avoid leaking secrets beyond `environment.ts`.
-- When in doubt, mirror existing patterns from `CreateAccount`, `Home`, and `Supabase` services.
+## Final Reminders
+- Follow the command set above for build/test/format. Prefer direct Vitest for focused runs.
+- Mirror existing patterns from `CreateAccount`, header/footer, and Supabase services.
+- Keep code small, typed, and consistent with Prettier + TS strict.
+- Never commit secrets; environment already contains anon key only.
+
+## UI/Design Notes
+- Header/Footer share the same blue brand color (`#004777`) and 1200px max-width container. Keep consistency if restyling.
+- Avoid bland defaults; if adding new UI, define purposeful spacing/typography (Roboto base from Material vars).
+- Background defaults to Material surface; avoid forcing full-height sections that break sticky footer.
+
+## Known Gotchas
+- `create-account` page must not set `height: 100vh`; use `min-height` to avoid fighting the shell layout.
+- Footer visibility is opt-in by route whitelist; new routes will hide footer unless added to `shouldShowFooter`.
+- No ESLint: breaking TS strict will surface during build/test instead—fix type errors before commits.
+- Supabase trigger enforces username; signup fails if metadata `username` is empty/blank.
+
+## Supabase SQL Usage
+- SQL migrations/snippets live under `src/db/`. Apply manually via Supabase SQL editor or migration tool; they are not auto-run.
+- Trigger file `user_profiles_trigger.sql` enables RLS, uniqueness, `NOT NULL`, and creates `user_profiles` after auth signup.
+- RLS policies currently include select for `user_profiles` only; expand with insert/update/delete policies if needed.

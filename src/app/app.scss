@@ -1,0 +1,11 @@
+
+:host {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--mat-sys-surface);
+}
+
+.app-main {
+  flex: 1 0 auto;
+}

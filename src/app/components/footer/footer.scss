@@ -1,0 +1,34 @@
+
+.footer {
+  background: #004777;
+  color: #fff;
+  padding: 16px 10px;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.footer-text,
+.footer-subtext {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.footer-subtext {
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+  }
+}
