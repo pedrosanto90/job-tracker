@@ -1,1 +1,26 @@
-<p>login works!</p>
+<div class="create-account-container">
+  <div class="create-account">
+    <h2 class="title">Login</h2>
+    <form [formGroup]="form" (ngSubmit)="onSubmitLogin()">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" required />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" formControlName="password" required />
+      </div>
+
+      @if (loginError) {
+        <small class="red">
+          Email or password is incorrect
+        </small>
+      }
+
+      <div class="form-group button">
+        <app-button label="Login" type="submit"></app-button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -14,4 +14,16 @@ export class AuthService {
     if (!newUser) {return;}
     return newUser;
   }
+
+  async signin(user: { email: string, password: string }) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: user.password
+    });
+    if (error) {
+      console.error('Error signing in:', error);
+      return null;
+    }
+    return data.user;
+  }
 }
